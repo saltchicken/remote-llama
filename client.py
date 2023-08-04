@@ -1,21 +1,14 @@
-import asyncio
-import logging
-
-import configparser
-config = configparser.ConfigParser()
-config.read("default.ini")
+import asyncio, logging, requests, wave
+import numpy as np
+# import sounddevice as sd
 
 import grpc
 import proto.proto_pb2 as proto_pb2
 import proto.proto_pb2_grpc as proto_pb2_grpc
 
-import re
-
-import requests
-
-import sounddevice as sd
-import wave
-import numpy as np
+import configparser
+config = configparser.ConfigParser()
+config.read("default.ini")
 
 def say_outloud(text):
     endpoint = "http://192.168.1.100:5500/api/tts"

@@ -1,10 +1,4 @@
-import asyncio, time
-import logging
-import queue, threading
-from concurrent import futures
-import configparser
-config = configparser.ConfigParser()
-config.read("default.ini")
+import asyncio, logging, queue, threading, configparser
 
 import grpc
 from proto.proto_pb2 import LlamaReply
@@ -16,17 +10,13 @@ from langchain.llms import LlamaCpp
 from langchain import PromptTemplate, LLMChain
 from langchain.callbacks.manager import CallbackManager
 from langchain.callbacks.base import BaseCallbackHandler
-# from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from langchain.callbacks import StdOutCallbackHandler
 from langchain.memory import ConversationBufferMemory
 from langchain.schema.output import LLMResult
 from typing import Any
 
 
-q = queue.Queue()
 class MyCustomHandler(BaseCallbackHandler):
     def on_llm_new_token(self, token: str, **kwargs) -> None:
-        # print(f"My custom handler, token: {token}")
         q.put(token)
     def on_llm_end(self, response: LLMResult, **kwargs: Any) -> Any:
         q.put('[[[END]]]')
@@ -45,11 +35,8 @@ Here is a history of our conversation:
 {question} [/INST]
 """
         self.prompt = PromptTemplate(template=self.template, input_variables=["chat_history", "question"])
-        # callback_manager = CallbackManager([StdOutCallbackHandler()])
         callback_manager = CallbackManager([MyCustomHandler()])
         self.memory = ConversationBufferMemory(memory_key="chat_history")
-    # Verbose is required to pass to the callback manager
-
         n_gpu_layers = 20  # Change this value based on your model and your GPU VRAM pool.
         n_batch = 512  # Should be between 1 and n_ctx, consider the amount of VRAM in your GPU.
 
@@ -59,16 +46,18 @@ Here is a history of our conversation:
             n_batch=n_batch,
             input={"temperature": 0.75, "max_length": 2000, "top_p": 1},
             n_ctx=2048,
-            # callback_manager=callback_manager,
             callback_manager=callback_manager,
             verbose=True,
         )
         self.chain = LLMChain(llm=self.llm, prompt=self.prompt, memory=self.memory)
+        
     def run(self, request):
         response = self.chain.run(request)
         return response
         
-
+config = configparser.ConfigParser()
+config.read("default.ini")
+q = queue.Queue()
 llama = Llama()
 
 def producer(request):
@@ -82,11 +71,9 @@ class LlamaCallback(LlamaCallbackServicer):
         while True:
             item = q.get()
             if item == '[[[END]]]':
-                print('Break the loop')
                 break
             else:
                 yield LlamaReply(answer=f"{item}")
-
 
 async def serve() -> None:
     server = grpc.aio.server()
@@ -96,7 +83,6 @@ async def serve() -> None:
     logging.info("Starting server on %s", listen_addr)
     await server.start()
     await server.wait_for_termination()
-
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
