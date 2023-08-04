@@ -1,6 +1,10 @@
 import asyncio
 import logging
 
+import configparser
+config = configparser.ConfigParser()
+config.read("default.ini")
+
 import grpc
 import proto.proto_pb2 as proto_pb2
 import proto.proto_pb2_grpc as proto_pb2_grpc
@@ -47,7 +51,8 @@ def is_complete_sentence(sentence):
 async def run() -> None:
     conversation = ""
     full_answer = ""
-    async with grpc.aio.insecure_channel("192.168.1.101:50051") as channel:
+    async with grpc.aio.insecure_channel(f"{config['DEFAULT']['ServerAddress']}:50051") as channel:
+    # async with grpc.aio.insecure_channel("192.168.1.101:50051") as channel:
         stub = proto_pb2_grpc.LlamaCallbackStub(channel)
 
         # # Read from an async generator
@@ -64,7 +69,7 @@ async def run() -> None:
             conversation += response.answer
             full_answer += response.answer
             if is_complete_sentence(conversation.strip()):
-                say_outloud(conversation.strip())
+                # say_outloud(conversation.strip())
                 conversation = ""
         print(full_answer)
 
