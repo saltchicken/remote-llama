@@ -46,7 +46,6 @@ def is_complete_sentence(sentence):
 async def run(input) -> None:
     conversation = ""
     full_answer = ""
-    print(input)
     async with grpc.aio.insecure_channel(f"{config['DEFAULT']['ServerAddress']}:50051") as channel:
     # async with grpc.aio.insecure_channel("192.168.1.101:50051") as channel:
         stub = proto_pb2_grpc.LlamaCallbackStub(channel)

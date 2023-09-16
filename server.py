@@ -47,7 +47,7 @@ class Llama():
         self.prompt = PromptTemplate(template=self.template, input_variables=["chat_history", "question"])
         callback_manager = CallbackManager([MyCustomHandler()])
         self.memory = ConversationBufferMemory(memory_key="chat_history")
-        n_gpu_layers = 20  # Change this value based on your model and your GPU VRAM pool.
+        n_gpu_layers = 100  # Change this value based on your model and your GPU VRAM pool.
         n_batch = 512  # Should be between 1 and n_ctx, consider the amount of VRAM in your GPU.
 
         self.llm = LlamaCpp(
