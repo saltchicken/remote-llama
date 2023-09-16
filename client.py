@@ -2,6 +2,8 @@ import asyncio, logging, requests, wave
 import numpy as np
 # import sounddevice as sd
 
+import argparse
+
 import grpc
 import proto.proto_pb2 as proto_pb2
 import proto.proto_pb2_grpc as proto_pb2_grpc
@@ -41,9 +43,10 @@ def is_complete_sentence(sentence):
         return False
     return True
 
-async def run() -> None:
+async def run(input) -> None:
     conversation = ""
     full_answer = ""
+    print(input)
     async with grpc.aio.insecure_channel(f"{config['DEFAULT']['ServerAddress']}:50051") as channel:
     # async with grpc.aio.insecure_channel("192.168.1.101:50051") as channel:
         stub = proto_pb2_grpc.LlamaCallbackStub(channel)
@@ -53,7 +56,7 @@ async def run() -> None:
         #     print("Llama client received from async generator: "+ response.answer)
 
         # Direct read from the stub
-        llama_stream = stub.llamaAsk(proto_pb2.LlamaRequest(prompt="What is 2 + 2?"))
+        llama_stream = stub.llamaAsk(proto_pb2.LlamaRequest(prompt=input))
         while True:
             response = await llama_stream.read()
             if response == grpc.aio.EOF:
@@ -69,4 +72,9 @@ async def run() -> None:
 
 if __name__ == "__main__":
     logging.basicConfig()
-    asyncio.run(run())
+    parser = argparse.ArgumentParser(description="Sends query to remote-llama")
+    
+    parser.add_argument('-i', '--input', required=True, help='Input prompt')
+
+    args = parser.parse_args()
+    asyncio.run(run(args.input))
