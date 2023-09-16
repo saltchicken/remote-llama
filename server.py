@@ -23,17 +23,27 @@ class MyCustomHandler(BaseCallbackHandler):
 
 class Llama():
     def __init__(self):
-        self.template = """<s>[INST] <<SYS>>
-You are a helpful, respectful and honest assistant. Always answer as helpfully as possible. Answer as breifly as possible.
 
-If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.
+## Llama 2 template
+#         self.template = """<s>[INST] <<SYS>>
+# You are a helpful, respectful and honest assistant. Always answer as helpfully as possible. Answer as breifly as possible.
 
-Here is a history of our conversation:
-{chat_history}
-<</SYS>>
+# If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.
 
-{question} [/INST]
-"""
+# Here is a history of our conversation:
+# {chat_history}
+# <</SYS>>
+
+# {question} [/INST]
+# """
+
+## Alpaca Convention template
+        self.template = """
+### Instruction: Here is a history of our conversation: {chat_history}
+        
+### Input: {question}
+        
+### Response:"""
         self.prompt = PromptTemplate(template=self.template, input_variables=["chat_history", "question"])
         callback_manager = CallbackManager([MyCustomHandler()])
         self.memory = ConversationBufferMemory(memory_key="chat_history")
